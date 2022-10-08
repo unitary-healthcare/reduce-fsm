@@ -20,15 +20,25 @@ All generated state machines are plain clojure functions and read events from
 clojure sequences.  Events are dispatched with core.match and allow the use of
 all match features (guards, destructuring, regex matching, etc.)
 
+## Release information
+
+[deps.edn][deps] dependency information:
+
+```
+io.github.unitary-healthcare/reduce-fsm {:git/sha "..."}
+```
+
+where `:git/sha` points to the latest Git commit hash.
+
 ## Usage
 
-Use via:
+Import as follows:
 
 ```clojure
 (require '[reduce-fsm :as fsm])
 ```
 
-## Examples
+[deps]: https://clojure.org/guides/deps_and_cli
 
 ### Basic FSM
 

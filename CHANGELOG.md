@@ -2,8 +2,10 @@
 
 ## [Unreleased]
 
+- Migrate from Leiningen to Deps
 - Update dependencies
   - core.match 1.0.0
+  - dorothy 0.0.7
 
 ## 0.1.4
 

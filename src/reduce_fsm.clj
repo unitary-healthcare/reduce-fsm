@@ -6,12 +6,13 @@ This package allows you to:
  - Create lazy sequences from state machines (see fsm-seq)
  - Create stateful filter functions for use with filter/remove (see fsm-filter)
  - Visualise state machines as"
-  (:use [clojure.core [match :only [match]]])
   (:require
-   [clojure [set :as set]]
-   clojure.core.match.regex
-   [dorothy [core :as d]]
-   [clojure [string :as str]]))
+   [clojure.core.match :refer [match]]
+   [clojure.core.match.regex]
+   [clojure.set :as set]
+   [clojure.string :as str]
+   [dorothy.core :as d]
+   [dorothy.jvm :as d.jvm]))
 
 (defn- fsm-fn?
   "return true if the symbol will be treated as a function in fsm state definitions."
@@ -769,7 +770,7 @@ See https://github.com/cdorrat/reduce-fsm for examples and documentation"
     (d/dot (fsm-dorothy fsm)))
 
 (defn- show-dorothy-fsm [fsm]
-  (d/show! (fsm-dot fsm)))
+  (d.jvm/show! (fsm-dot fsm)))
 
 (defn show-fsm
   "Display the fsm as a diagram using graphviz (see http://www.graphviz.org/)"
@@ -785,6 +786,5 @@ Expects the following parameters:
   - filename - the output file for the png."
   [fsm filename]
   (when (graphviz-installed?)
-    (d/save! (fsm-dot fsm) filename {:format :png}))
+    (d.jvm/save! (fsm-dot fsm) filename {:format :png}))
   nil)
-
