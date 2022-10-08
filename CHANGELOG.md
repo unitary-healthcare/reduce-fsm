@@ -2,10 +2,20 @@
 
 ## [Unreleased]
 
+- ...
+
+> :raised_hand: **Important:** All the releases **after** 0.1.4 refer to this
+> fork and not to the original [cdorrat/reduce-fsm][gh:original] library.
+
+## [1.0.0]
+
 - Migrate from Leiningen to Deps
 - Update dependencies
   - core.match 1.0.0
   - dorothy 0.0.7
+
+> :raised_hand: **Important:** All releases below this point refer to the
+> original [cdorrat/reduce-fsm][gh:original] library.
 
 ## 0.1.4
 
@@ -27,4 +37,7 @@
   - dorothy 0.0.3
 - Fixed a bug that would cause the state machines to overflow the stack on large input sequences
 
-[Unreleased]: https://github.com/unitary-healthcare/reduce-fsm/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/unitary-healthcare/reduce-fsm/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/unitary-healthcare/reduce-fsm/compare/v0.1.4...v1.0.0
+
+[gh:original]: https://github.com/cdorrat/reduce-fsm
