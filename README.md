@@ -22,13 +22,13 @@ all match features (guards, destructuring, regex matching, etc.)
 
 ## Release information
 
-[deps.edn][deps] dependency information:
+The [deps.edn][deps] dependency information for the latest release is:
 
 ```
-io.github.unitary-healthcare/reduce-fsm {:git/sha "..."}
+io.github.unitary-healthcare/reduce-fsm {:git/tag "v1.0.0" :git/sha "9017941"}
 ```
 
-where `:git/sha` points to the latest Git commit hash.
+See the [`CHANGELOG.md`](./CHANGELOG.md) file for further details.
 
 ## Usage
 
