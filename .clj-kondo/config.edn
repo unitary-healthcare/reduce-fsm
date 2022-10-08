@@ -1,0 +1,2 @@
+{:lint-as {reduce-fsm/defsm clojure.core/def
+           reduce-fsm/defsm-inc clojure.core/def}}
