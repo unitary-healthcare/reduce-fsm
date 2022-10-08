@@ -1,7 +1,7 @@
-(ns reduce-fsm-test  
+(ns reduce-fsm-test
   (:use [clojure.test])
   (:use [reduce-fsm])
-  (:import [java.awt.Frame]))
+  (:import (java.awt Frame)))
 
 (defn- test-save-line [state evt from-state to-state]
   (conj state evt))
@@ -17,18 +17,18 @@
 
 
 (deftest simple-fsm-behaviour
-  
-  (are [res acc events] (= res (log-search-fsm-test acc events))       
+
+  (are [res acc events] (= res (log-search-fsm-test acc events))
        ["5 event c"]  []  ["1 event a" "event x" "2 event b" "3 event c" "4 event a" "event x" "5 event c" "6 event a"]
        nil nil ["0 event c" "1 event a" "2 event b" "3 event c"]
        [] [] ["0 event c" "1 event a" "2 event b" "3 event c" ])
 
   (testing "can specify initial states"
     (is  (= [] (log-search-fsm-test :waiting-for-c []  ["4 event a" "event x" "5 event c" "6 event a"]))))
-  
+
   (testing "invalid initial states throw"
     (is (thrown? RuntimeException (log-search-fsm-test :i-dont-exist []  ["4 event a" "event x" "5 event c" "6 event a"])))))
-   
+
 
 (deftest dispatch-with-acc
   (let [an-fsm (fsm
@@ -40,17 +40,17 @@
 		 [:waiting-for-c
 		  [_ #".*event c"] -> :waiting-for-a]] :dispatch :event-and-acc)]
 
-  (are [res acc events] (= res (an-fsm acc events))       
+  (are [res acc events] (= res (an-fsm acc events))
        ["5 event c"]  []  ["1 event a" "event x" "2 event b" "3 event c" "4 event a" "event x" "5 event c" "6 event a"]
        nil nil ["0 event c" "1 event a" "2 event b" "3 event c"]
        [] [] ["0 event c" "1 event a" "2 event b" "3 event c" ])
-  
+
   ))
 
 (deftest single-dispatch-with-when
   (let [save-to-state (fn [acc evt from to] (conj acc to))
 	an-fsm (fsm
-		[[:initial 
+		[[:initial
 		  (n :guard #(< % 5)) -> {:action save-to-state} :small
 		  (n :guard even?) -> {:action save-to-state} :even]  ;; match guards take the last value if multiple match?
 		 [:small
@@ -66,8 +66,8 @@
     (when frame
       (.dispose ^java.awt.Frame frame))
     ))
- 
-  
+
+
 (deftest exit-with-state-fn
   (let [inc-val (fn [val & _] (inc val))
 	pong (fn [val] (>= val 3))
@@ -76,11 +76,11 @@
 			[pong
 			 _ -> {:action inc-val} :ping]])]
     (is (= 3 (ping-pong 0 (range 100))))))
-    
+
 
 (deftest simple-fsm-seq
   (let [emit-evt (fn [acc evt] evt)
-	log-seq (fsm-seq 
+	log-seq (fsm-seq
 		 [[:waiting-for-a
 		   #".*event a" -> :waiting-for-b]
 		  [:waiting-for-b
@@ -89,7 +89,7 @@
 		  [:waiting-for-c
 		   #".*event c" -> :waiting-for-a]])]
 
-    
+
     (are [res events] (= res (doall (log-seq [] events)))
 	 ["5 event c"]  ["1 event a" "event x" "2 event b" "3 event c" "4 event a" "event x" "5 event c" "6 event a"]
 	 []  ["1 event a" "2 event b" "3 event c"]
@@ -98,7 +98,7 @@
 
 (deftest simple-fsm-seq-with-initial-state
   (let [emit-evt (fn [acc evt] evt)
-	log-seq (fsm-seq 
+	log-seq (fsm-seq
 		 [[:waiting-for-a
 		   #".*event a" -> :waiting-for-b]
 		  [:waiting-for-b
@@ -108,7 +108,7 @@
 		   #".*event c" -> :waiting-for-a]])]
 
     (is (= [] (doall (log-seq :waiting-for-c  [] ["4 event a" "event x" "5 event c" "6 event a"]))))))
-  
+
 ;;===================================================================================================
 ;; fsm-filter tests
 
@@ -132,7 +132,7 @@
 			      [:suppressing {:pass false}
 			       6 -> :initial]])]
     (is (= [1 2 6 1 2] (filter (a-filter) [1 2 3 4 5 1 2 6 1 2])))))
-       
+
 
 (deftest using-is-terminal
   (let [inc-val (fn [val & _] (inc val))
@@ -159,9 +159,9 @@
 			_ -> :start]])]
     (is (= [2 0 1] (map (partial count-ab 0) ["abaaabc" "aaacb" "bbbcab"]))))
 
-  
+
   (let [emit-evt (fn [acc evt] evt)
-	log-search (fsm-seq 
+	log-search (fsm-seq
 		    [[:start
 		      #".*event a" -> :found-a]
 		     [:found-a
@@ -169,8 +169,8 @@
 		      #".*event c" -> {:emit emit-evt} :start]
 		     [:found-b
 		      #".*event c" -> :start]])]
-  
-    
+
+
     (is (= ["5 event c" "5 event c"]
 	     (take 2 (log-search (cycle ["1 event a"
 					 "2 event b"
@@ -179,8 +179,8 @@
 					 "4 event a"
 					 "event x"
 					 "5 event c"]))))))
-			         
-    )  
+
+    )
 
 
 ;;===================================================================================================
@@ -227,12 +227,12 @@
     #".*event c" -> :waiting-for-a]])
 
 
-(deftest simple-fsm-inc-behaviour 
+(deftest simple-fsm-inc-behaviour
   (are [res acc events] (= res (:value (reduce fsm-event (inc-log-fsm acc) events)))
        ["5 event c"]  []  ["1 event a" "event x" "2 event b" "3 event c" "4 event a" "event x" "5 event c" "6 event a"]
        nil nil ["0 event c" "1 event a" "2 event b" "3 event c"]
        [] [] ["0 event c" "1 event a" "2 event b" "3 event c" ]))
-   
+
 (deftest dispatch-inc-with-acc
   (let [an-fsm (fsm-inc
 		[[:waiting-for-a
@@ -250,7 +250,7 @@
 
 (deftest single-inc-dispatch-with-when
   (let [an-fsm (fsm-inc
-		[[:initial 
+		[[:initial
 		  (n :guard #(< % 5)) -> :small
 		  (n :guard even?) -> :even]  ;; match guards take the last value if multiple match?
 		 [:small
@@ -258,10 +258,10 @@
 		 [:even
 		  (n :guard odd?) -> :initial]])]
 
-    (is (= [:initial :even :even :even :initial :small :small :small :initial] 
+    (is (= [:initial :even :even :even :initial :small :small :small :initial]
            (map :state (reductions fsm-event (an-fsm) [8 2 4 3 1 2 2 1]))))))
 
-  
+
 (deftest inc-exit-with-state-fn
   (let [inc-val (fn [val & _] (inc val))
 	pong (fn [val] (>= val 3))
@@ -271,17 +271,17 @@
 			 _ -> {:action inc-val} :ping]])]
     (is (= 3
            (:value
-            (first 
-             (drop-while (complement :is-terminated?) 
+            (first
+             (drop-while (complement :is-terminated?)
                          (reductions fsm-event (ping-pong 0) (range 100)))))))))
 
 
-(deftest event-acc-vec-dispatch 
+(deftest event-acc-vec-dispatch
   (let [should-transition? (fn [[state event]] (= (* state 2) event))
         event-is-even? (fn [[state event]] (even? event))
         inc-count (fn [cnt & _ ] (inc cnt))
         reset-count (fn [& _]  100)
-        even-example (fsm  
+        even-example (fsm
 	   [[:start
 	     [_ :guard should-transition?] -> {:action reset-count} :next-state
 	     [_ :guard event-is-even?] -> {:action inc-count} :start]
@@ -292,4 +292,3 @@
     (are [events res] (= res (even-example events))
          [1 1 2] 1        ;;  (the number of even events)
          [1 2 2 4] 100)))  ;; 0 (we transitioned to next state)
-  
