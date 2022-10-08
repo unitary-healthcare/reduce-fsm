@@ -1,10 +1,11 @@
 (ns reduce-fsm-test
-  (:use [clojure.test])
-  (:use [reduce-fsm])
-  (:import (java.awt Frame)))
+  (:require
+    [clojure.test :refer [are deftest is testing]]
+    [reduce-fsm :refer [defsm defsm-inc fsm fsm-event fsm-filter fsm-inc fsm-seq]])
+  (:import java.awt.Frame))
 
 (defn- test-save-line
-  [state evt from-state to-state]
+  [state evt _from-state _to-state]
   (conj state evt))
 
 (defsm log-search-fsm-test
@@ -45,7 +46,7 @@
       [] [] ["0 event c" "1 event a" "2 event b" "3 event c"])))
 
 (deftest single-dispatch-with-when
-  (let [save-to-state (fn [acc evt from to] (conj acc to))
+  (let [save-to-state (fn [acc _evt _from to] (conj acc to))
         an-fsm (fsm
                  [[:initial
                    (n :guard #(< % 5)) -> {:action save-to-state} :small
@@ -60,7 +61,7 @@
   (let [frame (#'reduce-fsm/show-dorothy-fsm log-search-fsm-test)]
     (is (not (nil? frame)))
     (when frame
-      (.dispose ^java.awt.Frame frame))))
+      (.dispose ^Frame frame))))
 
 (deftest exit-with-state-fn
   (let [inc-val (fn [val & _] (inc val))
@@ -72,7 +73,7 @@
     (is (= 3 (ping-pong 0 (range 100))))))
 
 (deftest simple-fsm-seq
-  (let [emit-evt (fn [acc evt] evt)
+  (let [emit-evt (fn [_acc evt] evt)
         log-seq (fsm-seq
                   [[:waiting-for-a
                     #".*event a" -> :waiting-for-b]
@@ -89,7 +90,7 @@
       ["2 event c" "4 event c"]  ["x na-event" "1 event a" "2 event c" "3 event a" "4 event c"])))
 
 (deftest simple-fsm-seq-with-initial-state
-  (let [emit-evt (fn [acc evt] evt)
+  (let [emit-evt (fn [_acc evt] evt)
         log-seq (fsm-seq
                   [[:waiting-for-a
                     #".*event a" -> :waiting-for-b]
@@ -150,7 +151,7 @@
     (is (= [2 0 1] (map (partial count-ab 0) ["abaaabc" "aaacb" "bbbcab"]))))
 
 
-  (let [emit-evt (fn [acc evt] evt)
+  (let [emit-evt (fn [_acc evt] evt)
         log-search (fsm-seq
                      [[:start
                        #".*event a" -> :found-a]
@@ -262,7 +263,7 @@
 
 (deftest event-acc-vec-dispatch
   (let [should-transition? (fn [[state event]] (= (* state 2) event))
-        event-is-even? (fn [[state event]] (even? event))
+        event-is-even? (fn [[_state event]] (even? event))
         inc-count (fn [cnt & _] (inc cnt))
         reset-count (fn [& _]  100)
         even-example (fsm

@@ -10,7 +10,6 @@ This package allows you to:
     [clojure.core.match :refer [match]]
     [clojure.core.match.regex]
     [clojure.set :as set]
-    [clojure.string :as str]
     [dorothy.core :as d]
     [dorothy.jvm :as d.jvm]))
 
@@ -313,9 +312,9 @@ Parameters:
   from-state   - the state we're transitioning from
   evt          - the name of the event parameter in the match statement
   acc          - the name of the accumulator parameter in the match statement
-  events       - the sequence of events
+  _events      - the sequence of events
   evt-map      - the map representing this transition, eg. {:to-state x :action .... }"
-  [state-fn-map state-params from-state evt acc events evt-map]
+  [state-fn-map state-params from-state evt acc _events evt-map]
   (let [new-acc (gensym "new-acc")]
     `[~(:evt evt-map)
       (let [~new-acc ~(if (:action evt-map)
@@ -546,9 +545,8 @@ Example:
 (defn- expand-seq-evt-dispatch
   "Expand the dispatch line for a single fsm-seq dispatch line.
    The return value corresponds to a single case in a match clause"
-  [state-fn-map state-params from-state evt acc evt-map]
+  [state-fn-map _state-params from-state evt acc evt-map]
   (let [target-state-fn (state-fn-map (:to-state evt-map))
-        target-pass-val (-> evt-map :to-state state-params :pass)
         new-acc (gensym "new-acc")]
 
     `[~(:evt evt-map)
@@ -621,7 +619,7 @@ Example:
 The returned function will have the following 2 arities:
  [events]                    - accepts a sequence of events
  [val events]                - accepts an initial value for the accumulator and a sequence of events.
- [initial-state vals events] - start the seq fsm with a given state and accumulator value 
+ [initial-state vals events] - start the seq fsm with a given state and accumulator value
 
 The generated function will produce a lazy sequence that ends when one of the following is true:
  - There are no more events in the event sequence
@@ -695,7 +693,7 @@ See https://github.com/cdorrat/reduce-fsm for examples and documentation"
       (.exec (Runtime/getRuntime))
       (.waitFor)
       (= 0))
-    (catch Exception e false)))
+    (catch Exception _ false)))
 
 (defn- no-graphviz-message
   []
@@ -709,14 +707,6 @@ See https://github.com/cdorrat/reduce-fsm for examples and documentation"
     (do
       (no-graphviz-message)
       false)))
-
-(defn- dorothy-edge
-  "Create a single edge (transition) in a dorothy graph"
-  [from-state trans]
-  (let [label (str  " " (:evt trans)
-                (when (:action trans)
-                  (str "\\n(" (-> trans :action meta :name str) ")")))]
-    (vector from-state (:to-state trans) {:label label})))
 
 (defn- dorothy-state
   "Create a single dorothy state"
