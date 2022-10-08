@@ -1,11 +1,14 @@
 # Changelog
 
-## [Unreleased]
-
-- ...
-
 > :raised_hand: **Important:** All the releases **after** 0.1.4 refer to this
 > fork and not to the original [cdorrat/reduce-fsm][gh:original] library.
+
+## [Unreleased]
+
+- :warning: **Breaking:** Split the `reduce-fsm` namespace into the two
+  following namespaces:
+  - `reduce-fsm.fsm`: The core functionality for defining and using FSMs
+  - `reduce-fsm.visualize`: The functions for visualizing FSMs
 
 ## [1.0.0]
 
