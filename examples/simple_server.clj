@@ -1,5 +1,5 @@
 (ns simple-server
-  "An example fsm used for a simple TCP service to that lets users list the contents of directories after authenticating"  
+  "An example fsm used for a simple TCP service to that lets users list the contents of directories after authenticating"
   (:require [reduce-fsm :as fsm]
 	    [clojure [string :as str]]
 	    [clojure.java [io :as io]]
@@ -20,10 +20,10 @@
   (and (= "user" user)
        (= "password" password)))
 
-;; ================================= actions  ================================= 
+;; ================================= actions  =================================
 ;; These actions will be called in response to commands
 ;; with the following parameters [accumulated-state event from-state to-state]
-;; they should return the new accumulated state after the transition 
+;; they should return the new accumulated state after the transition
 
 (defn- chdir
   "set the current directory from a command"
@@ -41,7 +41,7 @@
     (writer (str "\t" f)))
   acc)
 
-(defn- invalid-command [{:keys [writer] :as acc} evt & _]  
+(defn- invalid-command [{:keys [writer] :as acc} evt & _]
   (writer (str "unrecognised command: " evt))
   acc)
 
@@ -49,7 +49,7 @@
 (defn quit [& _]
   true)
 
-;; ================================= actions  ================================= 
+;; ================================= actions  =================================
 ;; define our fsm
 ;; list-session will be a function with the following arities:
 ;;   [events]     - a sequence of events
@@ -61,7 +61,7 @@
 ;;   c). a state function returns true
 
 (fsm/defsm list-session [[:connected
-			  {:cmd "login" :args (a :when password-valid?)} -> :authorised
+                          ({:cmd "login"} :guard (comp password-valid? :args)) -> :authorised
 			  {:cmd _} -> {:action invalid-command} :connected]
 			 [:authorised
 			  {:cmd "cd"} -> {:action chdir} :authorised
@@ -73,7 +73,7 @@
 (comment
   ;; we can show our fsm as a diagram with
   (fsm/show-fsm list-session)
-  
+
   ;; the fsm is just an ordinary function
   ;; we can test our server at the repl like so
   (list-session {:writer println :curr-dir "."}
@@ -84,7 +84,7 @@
 		      "quit"]))
   )
 
-;; ================================= actions  ================================= 
+;; ================================= actions  =================================
 ;; create the tcp server
 
 (defn handle-connection
@@ -94,7 +94,7 @@
 	      rdr (io/reader input-stream)]
     (list-session {:writer #(doto w (.println %) .flush)  :curr-dir "."}
 		  (map parse-command (line-seq rdr)))))
-			     
+
 (defn start-server
   "Start a server listening on a specified port"
   [port]

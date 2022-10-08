@@ -70,9 +70,9 @@
    [:found-a
     [_ \a] -> :found-a
     [_ \b] -> {:action inc-b-count} :found-b
-    [_ _]  -> :start]   
+    [_ _]  -> :start]
    [:found-b
-    [(n :when count-satisfied?) \c] -> {:action matched-event} done-state
+    [(n :guard count-satisfied?) \c] -> {:action matched-event} done-state
     [_ \b] -> {:action inc-b-count} :found-b
     [_ _]  -> {:action reset-b-count} :start]
    [done-state]]
@@ -83,4 +83,3 @@
 (map #(-> % sample-regex  :matched)
      ["abc" "abbbbbc" "abbbc"])
 ;;=>  (false false true)
-
