@@ -16,4 +16,7 @@
    :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
                 lambdaisland/kaocha {:mvn/version "1.70.1086"}}
    :exec-fn kaocha.runner/exec-fn
-   :exec-args {}}}}
+   :exec-args {}}
+
+  :cljstyle
+  {:replace-deps {mvxcvi/cljstyle {:mvn/version "0.15.0"}}}}}
