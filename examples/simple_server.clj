@@ -1,11 +1,11 @@
 (ns simple-server
   "An example fsm used for a simple TCP service to that lets users list the contents of directories after authenticating"
   (:require [reduce-fsm :as fsm]
-	    [clojure [string :as str]]
-	    [clojure.java [io :as io]]
-	    [server [socket :as ss]])
+            [clojure [string :as str]]
+            [clojure.java [io :as io]]
+            [server [socket :as ss]])
   (:import java.io.File
-	   java.io.PrintWriter))
+           java.io.PrintWriter))
 
 (defn parse-command
   "Parse a single line into a command for our server"
@@ -18,7 +18,7 @@
   "return true if the user/password identifies a valid user"
   [[user password]]
   (and (= "user" user)
-       (= "password" password)))
+    (= "password" password)))
 
 ;; ================================= actions  =================================
 ;; These actions will be called in response to commands
@@ -41,12 +41,14 @@
     (writer (str "\t" f)))
   acc)
 
-(defn- invalid-command [{:keys [writer] :as acc} evt & _]
+(defn- invalid-command
+  [{:keys [writer] :as acc} evt & _]
   (writer (str "unrecognised command: " evt))
   acc)
 
 ;; a state function - returning true will cause the fsm to exit
-(defn quit [& _]
+(defn quit
+  [& _]
   true)
 
 ;; ================================= actions  =================================
@@ -62,13 +64,13 @@
 
 (fsm/defsm list-session [[:connected
                           ({:cmd "login"} :guard (comp password-valid? :args)) -> :authorised
-			  {:cmd _} -> {:action invalid-command} :connected]
-			 [:authorised
-			  {:cmd "cd"} -> {:action chdir} :authorised
-			  {:cmd "ls"} -> {:action list-dir} :authorised
-			  {:cmd "quit"} -> quit
-			  {:cmd _} -> {:action invalid-command} :authorised]
-			 [quit]])
+                          {:cmd _} -> {:action invalid-command} :connected]
+                         [:authorised
+                          {:cmd "cd"} -> {:action chdir} :authorised
+                          {:cmd "ls"} -> {:action list-dir} :authorised
+                          {:cmd "quit"} -> quit
+                          {:cmd _} -> {:action invalid-command} :authorised]
+                         [quit]])
 
 (comment
   ;; we can show our fsm as a diagram with
@@ -91,9 +93,9 @@
   "Handle a single client connection to our service"
   [input-stream output-stream]
   (with-open [w (PrintWriter. (io/writer output-stream) true)
-	      rdr (io/reader input-stream)]
+              rdr (io/reader input-stream)]
     (list-session {:writer #(doto w (.println %) .flush)  :curr-dir "."}
-		  (map parse-command (line-seq rdr)))))
+      (map parse-command (line-seq rdr)))))
 
 (defn start-server
   "Start a server listening on a specified port"

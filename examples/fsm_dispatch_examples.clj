@@ -2,14 +2,13 @@
   "Examples illustrating the supported event dispatch styles"
   (:require [reduce-fsm :as fsm]))
 
-
-
 ;; ============================================================
 ;; match-1 (default) event dispatch
 ;; Events are dispatched using the core.match/match-1 syntax.
 ;; See https://github.com/clojure/core.match for details
 
-(defn found-lisp [num-instances & _]
+(defn found-lisp
+  [num-instances & _]
   (println "Found lisp")
   (inc num-instances))
 
@@ -20,19 +19,19 @@
    [:found-l
     \i -> :found-i
     \l -> :found-l
-     _ -> :start]
+    _  -> :start]
    [:found-i
     \s -> :found-s
     \l -> :found-l
-     _ -> :start]
+    _  -> :start]
    [:found-s
     \p -> {:action found-lisp} :start
     \l -> :found-l
-    _ -> :start]]
+    _  -> :start]]
   :default-acc 0)
 
-
 (find-lisp "ablilispghlihilisp")
+
 ;; => Found lisp
 ;;    Found lisp
 ;;    2
@@ -48,20 +47,25 @@
 
 
 ;; we'll create an fsm to match the equvalent of the "ab{2,3}c" regex
-(defn inc-b-count [acc & _]
+(defn inc-b-count
+  [acc & _]
   (update-in acc [:repeats] inc))
 
-(defn reset-b-count [acc & _]
+(defn reset-b-count
+  [acc & _]
   (assoc acc :repeats 0))
 
-(defn count-satisfied? [{:keys [repeats]}]
+(defn count-satisfied?
+  [{:keys [repeats]}]
   (and (>= repeats 2)
-       (<= repeats 3)))
+    (<= repeats 3)))
 
-(defn matched-event [acc & _]
+(defn matched-event
+  [acc & _]
   (assoc acc :matched true))
 
-(defn done-state [& _]
+(defn done-state
+  [& _]
   true)
 
 (fsm/defsm sample-regex
@@ -81,5 +85,6 @@
 
 ;; test a series of strings
 (map #(-> % sample-regex  :matched)
-     ["abc" "abbbbbc" "abbbc"])
-;;=>  (false false true)
+  ["abc" "abbbbbc" "abbbc"])
+
+;; =>  (false false true)
