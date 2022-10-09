@@ -12,11 +12,10 @@
                 server-socket/server-socket {:mvn/version "1.0.0"}}}
 
   :kaocha
-  {:extra-paths ["test"]
-   :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
-                lambdaisland/kaocha {:mvn/version "1.70.1086"}}
-   :exec-fn kaocha.runner/exec-fn
-   :exec-args {}}
+  {:extra-deps {lambdaisland/kaocha {:mvn/version "1.70.1086"}}}
+
+  :kaocha-cljs
+  {:extra-deps {com.lambdaisland/kaocha-cljs {:mvn/version "1.4.130"}}}
 
   :cljstyle
   {:replace-deps {mvxcvi/cljstyle {:mvn/version "0.15.0"}}}}}
