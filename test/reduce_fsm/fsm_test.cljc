@@ -27,7 +27,9 @@
     (is  (= [] (log-search-fsm-test :waiting-for-c []  ["4 event a" "event x" "5 event c" "6 event a"]))))
 
   (testing "invalid initial states throw"
-    (is (thrown? RuntimeException (log-search-fsm-test :i-dont-exist []  ["4 event a" "event x" "5 event c" "6 event a"])))))
+    (is (thrown? #?(:clj RuntimeException
+                    :cljs js/Error)
+          (log-search-fsm-test :i-dont-exist []  ["4 event a" "event x" "5 event c" "6 event a"])))))
 
 (deftest dispatch-with-acc
   (let [an-fsm (fsm
@@ -67,6 +69,7 @@
 
 (deftest simple-fsm-seq
   (let [emit-evt (fn [_acc evt] evt)
+        _ (pr {::emit-evt emit-evt})
         log-seq (fsm-seq
                   [[:waiting-for-a
                     #".*event a" -> :waiting-for-b]
@@ -75,7 +78,7 @@
                     #".*event c" -> {:emit emit-evt} :waiting-for-a]
                    [:waiting-for-c
                     #".*event c" -> :waiting-for-a]])]
-
+    (pr {::log-seq log-seq})
 
     (are [res events] (= res (doall (log-seq [] events)))
       ["5 event c"]  ["1 event a" "event x" "2 event b" "3 event c" "4 event a" "event x" "5 event c" "6 event a"]
