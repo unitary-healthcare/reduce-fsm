@@ -5,6 +5,7 @@
 
 ## [Unreleased]
 
+- Add support for ClojureScript (limited to the `reduce-fsm.fsm` namespace)
 - :warning: **Breaking:** Split the `reduce-fsm` namespace into the two
   following namespaces:
   - `reduce-fsm.fsm`: The core functionality for defining and using FSMs
