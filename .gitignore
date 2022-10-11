@@ -15,3 +15,6 @@ multi-lib/**
 /.lein-*
 /.nrepl-port
 /.cpcache
+/node_modules
+/out
+/.cljs_node_repl

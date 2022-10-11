@@ -2,9 +2,13 @@
 help:
     @just --list
 
-# Run tests
-test:
-    clojure -X:kaocha
+# Run unit tests for Clojure
+test-clj:
+    clojure -M:dev:kaocha -m kaocha.runner unit-clj
+
+# Run unit tests for ClojureScript
+test-cljs:
+    clojure -M:dev:kaocha-cljs -m kaocha.runner unit-cljs
 
 # Check and fix formatting with cljstyle; MODE is one of "check" or "fix" (default).
 style MODE='fix':

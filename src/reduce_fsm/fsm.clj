@@ -1,17 +1,26 @@
-(ns reduce-fsm
+(ns reduce-fsm.fsm
   "Generate and display functional finite state machines that accumulate state
 in the same way as reduce.
 This package allows you to:
  - Create basic fsm's (see fsm)
  - Create lazy sequences from state machines (see fsm-seq)
- - Create stateful filter functions for use with filter/remove (see fsm-filter)
- - Visualise state machines as"
+ - Create stateful filter functions for use with filter/remove (see fsm-filter)"
   (:require
-    [clojure.core.match :refer [match]]
+    [cljs.core.match]
     [clojure.core.match.regex]
+    [clojure.core.match]
     [clojure.set :as set]
-    [dorothy.core :as d]
-    [dorothy.jvm :as d.jvm]))
+    [reduce-fsm.fsm.impl :as impl]))
+
+;; I'm grateful to [1].
+;;
+;; [1]: https://code.thheller.com/blog/shadow-cljs/2019/10/12/clojurescript-macros.html
+;;
+(defmacro match
+  [vars & clauses]
+  (if (:ns &env)
+    `(cljs.core.match/match ~vars ~@clauses)
+    `(clojure.core.match/match ~vars ~@clauses)))
 
 (defn- fsm-fn?
   "return true if the symbol will be treated as a function in fsm state definitions."
@@ -95,23 +104,11 @@ This package allows you to:
     (sanity-check-fsm state-maps)
     state-maps))
 
-(defn- state-fn-name
-  "Create a name for the internal function that will represent this state.
-   We want it to be recognisable to the user so stack traces are more intelligible"
-  [sym]
-  (cond
-    (fn? sym) (let [fn-name (-> sym meta :name str)]
-                (if (empty? fn-name)
-                  (str (gensym "fn-"))
-                  fn-name))
-    (keyword? sym) (name sym)
-    :else (str sym)))
-
 (defn- state-fn-symbol
   "Create a name for the internal function that will represent this state.
    We want it to be recognisable to the user so stack traces are more intelligible"
   [sym]
-  (gensym (str "state" "-" (state-fn-name sym) "-")))
+  (gensym (str "state" "-" (impl/state-fn-name sym) "-")))
 
 (defn- state-for-action
   [state]
@@ -194,12 +191,6 @@ Parameters:
   [fsm-type state-maps]
   {::fsm-type fsm-type
    ::states (vec (map state-metadata state-maps))})
-
-(defn lookup-state
-  [state-fn-map the-state]
-  (if-let [a-state-fn (get state-fn-map the-state)]
-    a-state-fn
-    (throw (RuntimeException. (str "Could not find the state \"" the-state "\"")))))
 
 ;; ===================================================================================================
 ;; We want to turn an fsm definition looking like this:
@@ -289,7 +280,7 @@ See https://github.com/cdorrat/reduce-fsm for examples and documentation"
            ([acc# events#]
             (the-fsm# ~(-> state-maps first :from-state) acc# events#))
            ([initial-state# acc# events#]
-            (trampoline (lookup-state ~state-fn-map initial-state#) acc# events#)))
+            (trampoline (impl/lookup-state ~state-fn-map initial-state#) acc# events#)))
          ~(fsm-metadata :fsm state-maps)))))
 
 (defmacro defsm
@@ -300,9 +291,6 @@ See https://github.com/cdorrat/reduce-fsm for examples and documentation"
 
 ;; ===================================================================================================
 ;; support for incremental fsms
-(defn- state-disp-name
-  [sym]
-  (keyword (state-fn-name sym)))
 
 (defn- expand-inc-evt-dispatch
   "Expand the dispatch of a single event for incremental fsms, this corresponds to a single case in the match expression.
@@ -320,7 +308,7 @@ Parameters:
       (let [~new-acc ~(if (:action evt-map)
                         `(~(:action evt-map) ~acc ~evt ~(state-for-action from-state) ~(state-for-action (:to-state evt-map)))
                         acc)]
-        {:state ~(state-disp-name (:to-state evt-map))
+        {:state ~(impl/state-disp-name (:to-state evt-map))
          :value ~new-acc
          :fsm ~(state-fn-map (:to-state evt-map))
          :is-terminated? ~(if (fsm-fn? (:to-state evt-map)) ; if the target state is a fn exit on truthy value
@@ -339,7 +327,7 @@ Parameters:
     `(~this-state-fn  [~acc ~evt]
                       (~@(expand-dispatch dispatch-type evt acc)
                        ~@(mapcat (partial expand-inc-evt-dispatch state-fn-map state-params (:from-state state)  evt acc events) (:transitions state))
-                       :else  {:state ~(state-disp-name (:from-state state))
+                       :else  {:state ~(impl/state-disp-name (:from-state state))
                                :is-terminated? false
                                :value ~acc
                                :fsm ~this-state-fn}))))
@@ -365,10 +353,10 @@ Subsequent chained calls to  fsm-event will move the fsm thought it's states.
            ([] (the-fsm# ~default-acc))
            ([acc#] (the-fsm# ~(-> state-maps first :from-state) acc#))
            ([initial-state# acc#]
-            {:state (~state-disp-name initial-state#)
+            {:state (impl/state-disp-name initial-state#)
              :is-terminated? false
              :value acc#
-             :fsm (lookup-state ~state-fn-map initial-state#)}))
+             :fsm (impl/lookup-state ~state-fn-map initial-state#)}))
          ~(fsm-metadata :inc-fsm state-maps)))))
 
 (defn fsm-event
@@ -505,7 +493,7 @@ Example:
            ([acc#]
             (filter-builder# ~(-> state-maps first :from-state) acc#))
            ([initial-state# acc#]
-            (let [curr-state# (atom ((lookup-state ~state-fn-map initial-state#) acc#))]
+            (let [curr-state# (atom ((impl/lookup-state ~state-fn-map initial-state#) acc#))]
               (fn [evt#]
                 (let [[pass# next-state#] (@curr-state# evt#)]
                   (reset! curr-state# next-state#)
@@ -520,27 +508,6 @@ Example:
 
 ;; ===================================================================================================
 ;; fsm-seq impl
-
-(defn- next-emitted
-  "Process events with the fsm-seq function f until we emit a new value for the sequence"
-  [f]
-  (when f
-    (loop [[emitted next-step] (f)]
-      (if next-step
-        (if (not= ::no-event emitted)
-          [emitted next-step]
-          (recur (next-step)))
-        [emitted nil]))))
-
-(defn ^{:skip-wiki true} fsm-seq-impl*
-  "Create a lazy sequence from a fsm-seq state function"
-  [f]
-  (let [[emitted next-step] (next-emitted f)]
-    (lazy-seq
-      (if next-step
-        (cons emitted (fsm-seq-impl* next-step))
-        (when (not= ::no-event emitted)
-          (cons emitted nil))))))
 
 (defn- expand-seq-evt-dispatch
   "Expand the dispatch line for a single fsm-seq dispatch line.
@@ -673,7 +640,7 @@ See https://github.com/cdorrat/reduce-fsm for examples and documentation"
             (fsm-seq-fn# ~(-> state-maps first :from-state) acc# events#))
            ([initial-state# acc# events#]
             (when (seq events#)
-              (fsm-seq-impl* ((lookup-state ~state-fn-map initial-state#)  acc# events#)))))
+              (impl/fsm-seq-impl* ((impl/lookup-state ~state-fn-map initial-state#)  acc# events#)))))
          ~(fsm-metadata :fsm-seq state-maps)))))
 
 (defmacro defsm-seq
@@ -681,97 +648,3 @@ See https://github.com/cdorrat/reduce-fsm for examples and documentation"
    see reduce-fsm/fsm-seq for details"
   [name states & fsm-opts]
   `(def ~name (fsm-seq ~states ~@fsm-opts)))
-
-;; ===================================================================================================
-;; methods to display fsm
-
-(defn- dot-exists
-  "return true if the dot executable from graphviz is available on the path"
-  [& _]
-  (try
-    (->> "dot -V"
-      (.exec (Runtime/getRuntime))
-      (.waitFor)
-      (= 0))
-    (catch Exception _ false)))
-
-(defn- no-graphviz-message
-  []
-  (println "The dot executable from graphviz was not found on the path, unable to draw fsm diagrams")
-  (println "Download a copy from http://www.graphviz.org/"))
-
-(defn- graphviz-installed?
-  []
-  (if (dot-exists)
-    true
-    (do
-      (no-graphviz-message)
-      false)))
-
-(defn- dorothy-state
-  "Create a single dorothy state"
-  [fsm-type {:keys [params name state]}]
-  (let [is-terminal? (if (= :fsm-filter fsm-type)
-                       (not (:pass params true))
-                       (or (:is-terminal params)
-                         (= \( (first name))))]
-    [state
-     (merge {:label name}
-       (when is-terminal?
-         {:style "filled,setlinewidth(2)"
-          :fillcolor "grey88"}))]))
-
-(defn- transitions-for-state
-  "return a sequence of dorothy transitions for a single state"
-  [state]
-  (letfn [(transition-label
-            [trans idx]
-            (str
-              (format "<TABLE BORDER=\"0\"><TR><TD TITLE=\"priority = %d\">%s</TD></TR>" idx (:evt trans))
-              (when (:action trans)
-                (format "<TR><TD>(%s)</TD></TR>" (:action trans)))
-              (when (:emit trans)
-                (format "<TR><TD>(%s) -&gt;</TD></TR>" (:emit trans)))
-              "</TABLE>"))
-          (format-trans
-            [trans idx]
-            [(:from-state trans) (:to-state trans) {:label (transition-label trans idx)}])]
-    (map format-trans (:transitions state) (range (count (:transitions state))))))
-
-(defn fsm-dorothy
-  "Create a dorothy digraph definition for an fsm"
-  [fsm]
-  (let [start-state (keyword (gensym "start-state"))
-        state-map (->> fsm meta :reduce-fsm/states)
-        fsm-type (->> fsm meta :reduce-fsm/fsm-type)]
-    (d/digraph
-      (concat
-        [[start-state {:label "start" :style :filled :color :black :shape "point" :width "0.2" :height "0.2"}]]
-        (map (partial dorothy-state fsm-type) state-map)
-        [[start-state (-> state-map first :state)]]
-        (mapcat transitions-for-state state-map)))))
-
-(defn fsm-dot
-  "Create the graphviz dot output for an fsm"
-  [fsm]
-  (d/dot (fsm-dorothy fsm)))
-
-(defn- show-dorothy-fsm
-  [fsm]
-  (d.jvm/show! (fsm-dot fsm)))
-
-(defn show-fsm
-  "Display the fsm as a diagram using graphviz (see http://www.graphviz.org/)"
-  [fsm]
-  (when (graphviz-installed?)
-    (show-dorothy-fsm fsm)))
-
-(defn save-fsm-image
-  "Save the state transition diagram for an fsm as a png.
-Expects the following parameters:
-  - fsm      - the fsm to render
-  - filename - the output file for the png."
-  [fsm filename]
-  (when (graphviz-installed?)
-    (d.jvm/save! (fsm-dot fsm) filename {:format :png}))
-  nil)

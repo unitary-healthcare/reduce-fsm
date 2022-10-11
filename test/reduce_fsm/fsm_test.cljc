@@ -1,8 +1,7 @@
-(ns reduce-fsm-test
+(ns reduce-fsm.fsm-test
   (:require
     [clojure.test :refer [are deftest is testing]]
-    [reduce-fsm :refer [defsm defsm-inc fsm fsm-event fsm-filter fsm-inc fsm-seq]])
-  (:import java.awt.Frame))
+    [reduce-fsm.fsm :refer [defsm defsm-inc fsm fsm-event fsm-filter fsm-inc fsm-seq]]))
 
 (defn- test-save-line
   [state evt _from-state _to-state]
@@ -28,7 +27,9 @@
     (is  (= [] (log-search-fsm-test :waiting-for-c []  ["4 event a" "event x" "5 event c" "6 event a"]))))
 
   (testing "invalid initial states throw"
-    (is (thrown? RuntimeException (log-search-fsm-test :i-dont-exist []  ["4 event a" "event x" "5 event c" "6 event a"])))))
+    (is (thrown? #?(:clj RuntimeException
+                    :cljs js/Error)
+          (log-search-fsm-test :i-dont-exist []  ["4 event a" "event x" "5 event c" "6 event a"])))))
 
 (deftest dispatch-with-acc
   (let [an-fsm (fsm
@@ -57,12 +58,6 @@
                    (n :guard odd?) -> {:action save-to-state} :initial]])]
     (is (= [:even :initial :small :initial] (an-fsm [] [8 2 4 3 1 2 2 1])))))
 
-(deftest display-dorothy-fsm-test
-  (let [frame (#'reduce-fsm/show-dorothy-fsm log-search-fsm-test)]
-    (is (not (nil? frame)))
-    (when frame
-      (.dispose ^Frame frame))))
-
 (deftest exit-with-state-fn
   (let [inc-val (fn [val & _] (inc val))
         pong (fn [val] (>= val 3))
@@ -74,6 +69,7 @@
 
 (deftest simple-fsm-seq
   (let [emit-evt (fn [_acc evt] evt)
+        _ (pr {::emit-evt emit-evt})
         log-seq (fsm-seq
                   [[:waiting-for-a
                     #".*event a" -> :waiting-for-b]
@@ -82,7 +78,7 @@
                     #".*event c" -> {:emit emit-evt} :waiting-for-a]
                    [:waiting-for-c
                     #".*event c" -> :waiting-for-a]])]
-
+    (pr {::log-seq log-seq})
 
     (are [res events] (= res (doall (log-seq [] events)))
       ["5 event c"]  ["1 event a" "event x" "2 event b" "3 event c" "4 event a" "event x" "5 event c" "6 event a"]
