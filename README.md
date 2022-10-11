@@ -6,19 +6,23 @@ This is a fork of the [cdorrat/reduce-fsm][gh:cdorrat] repository.
 
 ## Features
 
-reduce-fsm provides a simple way to specify clojure [finite state
-machines](http://en.wikipedia.org/wiki/Finite-state_machine), it allows you
-to:
+Reduce-fsm provides a simple way to specify [finite state
+machines](http://en.wikipedia.org/wiki/Finite-state_machine) in Clojure and
+ClojureScript. It allows you to:
 
 - Define define state machines that accumulate values (in the same was that
   reduce does)
 - Create lazy sequences from state machines
 - Perform stateful filtering with clojures filter/remove functions
-- Visualize the resulting state machines with graphviz
+- Visualize the resulting state machines with
+  [Graphviz](https://graphviz.org/) (not available on ClojureScript)
 
-All generated state machines are plain clojure functions and read events from
-clojure sequences.  Events are dispatched with core.match and allow the use of
-all match features (guards, destructuring, regex matching, etc.)
+All generated state machines are plain Clojure/Script functions and read
+events from Clojure sequences.  Events are dispatched with
+[`core.match`][core.match] and allow the use of all `match` features (guards,
+destructuring, regex matching, etc.)
+
+[core.match]: https://github.com/clojure/core.match/wiki/Overview
 
 ## Release information
 
@@ -30,19 +34,20 @@ io.github.unitary-healthcare/reduce-fsm {:git/tag "v1.0.0" :git/sha "9017941"}
 
 See the [`CHANGELOG.md`](./CHANGELOG.md) file for further details.
 
+[deps]: https://clojure.org/guides/deps_and_cli
+
 ## Usage
 
 Import as follows:
 
 ```clojure
-(require '[reduce-fsm :as fsm])
+(require '[reduce-fsm.fsm :as fsm])
+(require '[reduce-fsm.visualize :as fsm.viz]) ; Clojure only
 ```
-
-[deps]: https://clojure.org/guides/deps_and_cli
 
 ### Basic FSM
 
-The following example counts the number of times "ab" occurs in a sequence.
+The following example counts the number of times `"ab"` occurs in a sequence:
 
 ```clojure
 (defn inc-val [val & _] (inc val))
@@ -59,9 +64,8 @@ The following example counts the number of times "ab" occurs in a sequence.
 (map (partial count-ab 0) ["abaaabc" "aaacb" "bbbcab"])
 ;; returns => (2 0 1)
 
-(fsm/show-fsm count-ab)
-;; displays the fsm diagram below
-
+(fsm.viz/show-fsm count-ab)
+;; displays the fsm diagram below (Clojure only)
 ```
 
 > :warning: **TODO:** Fix broken image.
@@ -108,10 +112,10 @@ callbacks.
 
 ### Generating Lazy Sequences
 
-The fsm-seq functions return lazy sequences of values created by the emit
+The `fsm-seq` functions return lazy sequences of values created by the emit
 function when a state change occurs.  This example looks for log lines where
-the sequence of events was (a,c) instead of the expected (a,b,c) and adds the
-unexpected event to the output sequence.
+the sequence of events was (a, c) instead of the expected (a, b, c) and adds
+the unexpected event to the output sequence.
 
 
 ```clojure
@@ -138,9 +142,8 @@ unexpected event to the output sequence.
 
 ;; returns => ("5 event c" "5 event c")
 
-(fsm/show-fsm log-search)
-;; displays the image below
-
+(fsm.viz/show-fsm log-search)
+;; displays the image below (Clojure only)
 ```
 
 > :warning: **TODO:** Fix broken image.
@@ -150,11 +153,11 @@ unexpected event to the output sequence.
 ### Stateful Filtering
 
 States in filters are defined as passing values (default) or suppressing them
-{:pass false}.  For each event the filter will return the pass value of the
+`{:pass false}`.  For each event the filter will return the pass value of the
 state it is in after processing the event (input sequence element).
 
-The following example suppresses values from the time a 3 is encountered until
-we see a 6.
+The following example suppresses values from the time a `3` is encountered
+until we see a `6`.
 
 ```clojure
 (defsm-filter sample-filter
@@ -168,8 +171,8 @@ we see a 6.
 (filter (sample-filter) [1 2 3 4 5 1 2 6 1 2])
 ;; returns => (1 2 6 1 2)
 
-(fsm/show-fsm sample-filter)
-;; displays the diagram below
+(fsm.viz/show-fsm sample-filter)
+;; displays the diagram below (Clojure only)
 ```
 
 ![show-fsm output](http://cdorrat.github.com/reduce-fsm/images/fsm-sample-filter.png)
@@ -177,7 +180,7 @@ we see a 6.
 ### Different dispatch types
 
 When defining a state machine the matching rules for a transition only use the
-current event by default, by adding the :dispatch option you can make
+current event by default, by adding the `:dispatch` option you can make
 transitions conditional on the state as well as the current event.  The
 following dispatch types are supported:
 
@@ -219,16 +222,18 @@ The following example demonstrates `:event-acc-vec` dispatch.
 
 ### Other examples
 
-There are additional exmaples on [github](https://github.com/cdorrat/reduce-fsm/tree/master)
-in the examples and test directories  including:
+There are additional examples on
+[GitHub](https://github.com/cdorrat/reduce-fsm/tree/master) in the `examples/`
+and `test/` directories including:
 
-- a simple tcp server
+- a simple TCP server
 - matching repeating groups
-- using the :event-and-acc match syntax
+- using the `:event-and-acc` match syntax
 - using guards on events
 
 ## License
 
-Copyright (C) 2011 Cameron Dorrat
+<p>Copyright (C) 2011 Cameron Dorrat<br>
+Copyright © 2022 Unitary Healthcare</p>
 
 Distributed under the Eclipse Public License, the same as Clojure.
