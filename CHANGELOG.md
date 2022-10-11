@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+...
+
+## [2.0.0]
+
 - Add support for ClojureScript (limited to the `reduce-fsm.fsm` namespace)
 - :warning: **Breaking:** Split the `reduce-fsm` namespace into the two
   following namespaces:
@@ -41,7 +45,8 @@
   - dorothy 0.0.3
 - Fixed a bug that would cause the state machines to overflow the stack on large input sequences
 
-[Unreleased]: https://github.com/unitary-healthcare/reduce-fsm/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/unitary-healthcare/reduce-fsm/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/unitary-healthcare/reduce-fsm/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/unitary-healthcare/reduce-fsm/compare/v0.1.4...v1.0.0
 
 [gh:original]: https://github.com/cdorrat/reduce-fsm
