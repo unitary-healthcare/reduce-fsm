@@ -1,8 +1,7 @@
-(ns reduce-fsm-test
+(ns reduce-fsm.fsm-test
   (:require
     [clojure.test :refer [are deftest is testing]]
-    [reduce-fsm :refer [defsm defsm-inc fsm fsm-event fsm-filter fsm-inc fsm-seq]])
-  (:import java.awt.Frame))
+    [reduce-fsm.fsm :refer [defsm defsm-inc fsm fsm-event fsm-filter fsm-inc fsm-seq]]))
 
 (defn- test-save-line
   [state evt _from-state _to-state]
@@ -56,12 +55,6 @@
                   [:even
                    (n :guard odd?) -> {:action save-to-state} :initial]])]
     (is (= [:even :initial :small :initial] (an-fsm [] [8 2 4 3 1 2 2 1])))))
-
-(deftest display-dorothy-fsm-test
-  (let [frame (#'reduce-fsm/show-dorothy-fsm log-search-fsm-test)]
-    (is (not (nil? frame)))
-    (when frame
-      (.dispose ^Frame frame))))
 
 (deftest exit-with-state-fn
   (let [inc-val (fn [val & _] (inc val))
