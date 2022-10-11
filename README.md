@@ -29,7 +29,7 @@ destructuring, regex matching, etc.)
 The [deps.edn][deps] dependency information for the latest release is:
 
 ```
-io.github.unitary-healthcare/reduce-fsm {:git/tag "v1.0.0" :git/sha "9017941"}
+io.github.unitary-healthcare/reduce-fsm {:git/tag "v2.0.0" :git/sha "cbc055b"}
 ```
 
 See the [`CHANGELOG.md`](./CHANGELOG.md) file for further details.
